@@ -22,8 +22,8 @@ class EngineNFA:
     def __init__(self, alphabet):
         self.transitions_table = [] 
         self.alphabet = alphabet.copy()
-        self.alphabet[EPSILON] = max(alphabet.values()) + 1
-        
+        self.alphabet[EPSILON] = (max(alphabet.values()) if len(alphabet) > 0 else 0) + 1
+
     def add_state(self, name, transition: range, nextStatesIdx: Tuple[int, ...], is_accept=False, is_epsilon=False) -> None:
         new_state = State(len(self.alphabet.keys()), name, is_accept, is_epsilon)
         new_state.set_transition_vec(transition, nextStatesIdx)
@@ -55,26 +55,38 @@ class EngineNFA:
         return f"S{int(num_as_str) + inc}"
 
     def is_match(self, input: Union[str, List[str]]) -> bool:
-        stack = []
-        stack.append((0, self.transitions_table[0]))
-        while len(stack) > 0:
-            idx, curr_state = stack.pop()
-            if(curr_state.is_accept):
+        stack = [(0, self.transitions_table[0])]  # (input_index, state)
+
+        while stack:
+            print(stack)
+            idx, state = stack.pop()
+            print(state.is_accept, idx, len(input))
+            # Check if this state is accepting
+            if state.is_accept and idx == len(input):
                 return True
-            if(idx >= len(input)):
-                return False
-            char = input[idx]
-            if(char not in self.alphabet):
-                raise ValueError(f"Invalid character: {char} is not a valid character in the defined alphabet")
-            transitions = curr_state.transitions[self.alphabet[char]]
-            
-            if isinstance(transitions, int):
-                transitions = tuple([transitions])
-                
-            for s in reversed(transitions):
-                if s != 0:
-                    next_char_idx = idx if curr_state.is_epsilon else idx + 1 
-                    stack.append((next_char_idx, self.transitions_table[s]))
+
+            # Determine next characters to process
+            if idx < len(input):
+                char = input[idx]
+                if char not in self.alphabet:
+                    raise ValueError(f"Invalid character: {char} is not a valid character in the defined alphabet")
+                transitions = state.transitions[self.alphabet[char]]
+                if isinstance(transitions, int):
+                    transitions = (transitions,)
+                for next_state_idx in reversed(transitions):
+                    if next_state_idx != 0:
+                        stack.append((idx + 1, self.transitions_table[next_state_idx]))
+
+            # Always process epsilon transitions (do not advance idx)
+            epsilon_transitions = state.transitions[self.alphabet[EPSILON]]
+            print("ep trans",epsilon_transitions)
+            if isinstance(epsilon_transitions, int):
+                epsilon_transitions = (epsilon_transitions,)
+            for next_state_idx in reversed(epsilon_transitions):
+                print("next state idx", next_state_idx)
+                if next_state_idx != 0:
+                    stack.append((idx, self.transitions_table[next_state_idx]))
+
         return False
     
     def dump(self):
