@@ -32,27 +32,10 @@ class EngineNFA:
     def remove_accept_state(self):
         del self.transitions_table[-1]
         
-    def increment_state_by(self, state: State, inc: int):
-        state.name = self.get_incremented_state_name(state, inc)
-        state.transitions = [(x[0] + inc, *x[1:]) if isinstance(x, tuple)
-                                and len(x) > 0 and x[0] != 0 else x for x in state.transitions]
-        return state
     
     def insert_state(self, state: State):
         self.transitions_table.append(state)   
                 
-    def get_incremented_state_name(self, state: State, inc: int):
-        num_as_str = ""
-        i = 0
-        while i < len(state.name):
-            if state.name[i] == 'S':
-                i += 1
-                while i < len(state.name) and state.name[i].isdigit():
-                    num_as_str += state.name[i]
-                    i += 1
-            else:
-                i += 1
-        return f"S{int(num_as_str) + inc}"
 
     def is_match(self, input: Union[str, List[str]]) -> bool:
         stack = [(0, self.transitions_table[0])]  # (input_index, state)
