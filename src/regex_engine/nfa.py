@@ -39,11 +39,13 @@ class EngineNFA:
 
     def is_match(self, input: Union[str, List[str]]) -> bool:
         stack = [(0, self.transitions_table[0])]  # (input_index, state)
-
+        visited = set()
         while stack:
-            print(stack)
             idx, state = stack.pop()
-            print(state.is_accept, idx, len(input))
+            key = (idx, id(state))
+            if key in visited:
+                continue
+            visited.add(key)
             # Check if this state is accepting
             if state.is_accept and idx == len(input):
                 return True

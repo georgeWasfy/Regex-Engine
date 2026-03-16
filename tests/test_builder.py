@@ -626,3 +626,75 @@ class TestRegressionStarLoopIndex:
         assert accepts('ab|*', '')
         assert accepts('ab|*', 'abba')
         assert not accepts('ab|*', 'c')
+
+
+class TestVisitedGuard:
+    """
+    Patterns whose star/repeat body can be traversed entirely by epsilon
+    transitions create cycles that can loop forever.
+    """
+ 
+    # --- (a?)* : star whose body is optional (contains an epsilon path) ---
+ 
+    def test_optional_star_empty(self):
+        """(a?)* must accept '' without looping."""
+        assert accepts('a?*', '')
+ 
+    def test_optional_star_single(self):
+        assert accepts('a?*', 'a')
+ 
+    def test_optional_star_several(self):
+        assert accepts('a?*', 'aaa')
+ 
+    def test_optional_star_rejects_wrong_char(self):
+        assert not accepts('a?*', 'b')
+ 
+    def test_optional_star_rejects_mixed(self):
+        assert not accepts('a?*', 'ab')
+ 
+    # --- (a*)* : star of a star (double epsilon cycle) ---
+ 
+    def test_star_of_star_empty(self):
+        """(a*)* must terminate on '' without looping."""
+        assert accepts('a**', '')
+ 
+    def test_star_of_star_single(self):
+        assert accepts('a**', 'a')
+ 
+    def test_star_of_star_several(self):
+        assert accepts('a**', 'aaaa')
+ 
+    def test_star_of_star_rejects_wrong(self):
+        assert not accepts('a**', 'b')
+ 
+    # --- ((a*)*)* : triple nesting ---
+ 
+    def test_triple_star_empty(self):
+        assert accepts('a***', '')
+ 
+    def test_triple_star_several(self):
+        assert accepts('a***', 'aaa')
+ 
+    def test_triple_star_rejects_wrong(self):
+        assert not accepts('a***', 'b')
+ 
+    # --- (a?b?)* : star over a body that is entirely optional ---
+ 
+    def test_both_optional_star_empty(self):
+        assert accepts('a?b?#*', '')
+ 
+    def test_both_optional_star_a(self):
+        assert accepts('a?b?#*', 'a')
+ 
+    def test_both_optional_star_b(self):
+        assert accepts('a?b?#*', 'b')
+ 
+    def test_both_optional_star_ab(self):
+        assert accepts('a?b?#*', 'ab')
+ 
+    def test_both_optional_star_repeated(self):
+        assert accepts('a?b?#*', 'abab')
+ 
+    def test_both_optional_star_rejects_wrong(self):
+        assert not accepts('a?b?#*', 'c')
+ 
